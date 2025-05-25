@@ -7,7 +7,7 @@ import vecxt.all.*
 import vecxt.BoundsCheck.DoBoundsCheck.yes
 import narr.*
 
-val numBoids = 500
+val numBoids = 750
 
 @main def main =
   println("Boids simulation starting...")
@@ -312,4 +312,4 @@ val numBoids = 500
   }
 
   // Call animate every 100ms
-  dom.window.setInterval(() => animate(), 50)
+  dom.window.setInterval(() => animate(), 25)
