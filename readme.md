@@ -6,7 +6,7 @@ In a terminal
 
 ```sh
 
-cs launch io.github.quafadas:sjsls_3:0.2.6
+cs launch io.github.quafadas:sjsls_3:0.2.8
 
 ```
 
