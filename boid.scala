@@ -10,7 +10,6 @@ import narr.*
 val numBoids = 500
 
 @main def main =
-  dom.console.log("Boids simulation starting...")
   println("Boids simulation starting...")
 
   val positions = Matrix.zeros[Double](numBoids, 2)
@@ -167,19 +166,123 @@ val numBoids = 500
     if (positions((boidIndex, 1)) > height) positions((boidIndex, 1)) = 0
   }
 
-  // Animation loop
-  def animate(): Unit = {
+  // Optimized version - calculate all forces in one pass
+  inline def calculateForces(
+      boidIndex: Int
+  ): (Double, Double, Double, Double, Double, Double) = {
+    var sepX = 0.0
+    var sepY = 0.0
+    var sepCount = 0
+
+    var aliX = 0.0
+    var aliY = 0.0
+    var aliCount = 0
+
+    var cohX = 0.0
+    var cohY = 0.0
+    var cohCount = 0
+
+    val boidX = positions((boidIndex, 0))
+    val boidY = positions((boidIndex, 1))
+    val boidVelX = velocities((boidIndex, 0))
+    val boidVelY = velocities((boidIndex, 1))
+
+    var j = 0
+    while (j < numBoids) {
+      if (j != boidIndex) {
+        val dx = boidX - positions((j, 0))
+        val dy = boidY - positions((j, 1))
+        val distanceSquared = dx * dx + dy * dy // Avoid sqrt when possible
+
+        // Separation
+        if (
+          distanceSquared > 0 && distanceSquared < separationDistance * separationDistance
+        ) {
+          val distance = math.sqrt(distanceSquared)
+          sepX += dx / distance
+          sepY += dy / distance
+          sepCount += 1
+        }
+
+        // Alignment
+        if (
+          distanceSquared > 0 && distanceSquared < alignmentDistance * alignmentDistance
+        ) {
+          aliX += velocities((j, 0))
+          aliY += velocities((j, 1))
+          aliCount += 1
+        }
+
+        // Cohesion
+        if (
+          distanceSquared > 0 && distanceSquared < cohesionDistance * cohesionDistance
+        ) {
+          cohX += positions((j, 0))
+          cohY += positions((j, 1))
+          cohCount += 1
+        }
+      }
+      j += 1
+    }
+
+    // Process separation
+    if (sepCount > 0) {
+      sepX /= sepCount
+      sepY /= sepCount
+      val magnitude = math.hypot(sepX, sepY)
+      if (magnitude > 0) {
+        sepX = (sepX / magnitude) * maxSpeed - boidVelX
+        sepY = (sepY / magnitude) * maxSpeed - boidVelY
+      }
+      val (limitedSepX, limitedSepY) = limitForce(sepX, sepY, maxForce)
+      sepX = limitedSepX
+      sepY = limitedSepY
+    }
+
+    // Process alignment
+    if (aliCount > 0) {
+      aliX /= aliCount
+      aliY /= aliCount
+      val magnitude = math.hypot(aliX, aliY)
+      if (magnitude > 0) {
+        aliX = (aliX / magnitude) * maxSpeed - boidVelX
+        aliY = (aliY / magnitude) * maxSpeed - boidVelY
+      }
+      val (limitedAliX, limitedAliY) = limitForce(aliX, aliY, maxForce)
+      aliX = limitedAliX
+      aliY = limitedAliY
+    }
+
+    // Process cohesion
+    if (cohCount > 0) {
+      cohX = cohX / cohCount - boidX
+      cohY = cohY / cohCount - boidY
+      val magnitude = math.hypot(cohX, cohY)
+      if (magnitude > 0) {
+        cohX = (cohX / magnitude) * maxSpeed - boidVelX
+        cohY = (cohY / magnitude) * maxSpeed - boidVelY
+      }
+      val (limitedCohX, limitedCohY) = limitForce(cohX, cohY, maxForce)
+      cohX = limitedCohX
+      cohY = limitedCohY
+    }
+
+    (sepX, sepY, aliX, aliY, cohX, cohY)
+  }
+
+  // Updated animation loop
+  inline def animate(): Unit = {
     ctx.clearRect(0, 0, width, height)
 
-    // Calculate accelerations for all boids
-    for (i <- 0 until numBoids) {
-      val (sepX, sepY) = separate(i)
-      val (aliX, aliY) = align(i)
-      val (cohX, cohY) = cohesion(i)
+    // Calculate all forces in one pass
+    var i = 0
+    while (i < numBoids) {
+      val (sepX, sepY, aliX, aliY, cohX, cohY) = calculateForces(i)
 
       // Weight the forces
       accelerations((i, 0)) = sepX * 1.5 + aliX * 1.0 + cohX * 1.0
       accelerations((i, 1)) = sepY * 1.5 + aliY * 1.0 + cohY * 1.0
+      i += 1
     }
 
     // Update boids
