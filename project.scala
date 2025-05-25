@@ -1,5 +1,6 @@
 //> using scala 3.7.0
 //> using platform js
+//> using jsVersion 1.19.0
 //> using jsModuleKind es
 //> using jsEmitSourceMaps true
 
