@@ -5,9 +5,7 @@ A naive (vibe coded!) implementation of https://eater.net/boids
 In a terminal
 
 ```sh
-
-cs launch io.github.quafadas:sjsls_3:0.2.8
-
+just dev
 ```
 
 # WASM vs JS
