@@ -7,10 +7,12 @@ import vecxt.all.*
 import vecxt.BoundsCheck.DoBoundsCheck.yes
 import narr.*
 
-val numBoids = 750
+val numBoids = 20
 
 @main def main =
   println("Boids simulation starting...")
+
+  // val testeryl: Array[Double] = Array[Double](1.0, 2.0)
 
   val positions = Matrix.zeros[Double](numBoids, 2)
   val velocities = Matrix.zeros[Double](numBoids, 2)
@@ -34,6 +36,8 @@ val numBoids = 750
   ctx.font = "16px Arial"
   ctx.textAlign = "center"
   ctx.textBaseline = "middle"
+
+  println("Canvas initialized with dimensions: " + width + "x" + height)
 
   // Initialize boids with random positions and velocities
   for (i <- 0 until numBoids) {
@@ -72,6 +76,7 @@ val numBoids = 750
     }
 
     if (count > 0) {
+      println(s"Boid $boidIndex: Separation count = $count")
       steerX /= count
       steerY /= count
       // Normalize and scale
